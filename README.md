@@ -34,3 +34,27 @@ El proyecto implementa la propiedad `createDatabaseIfNotExist=true` en el driver
 
 ## 🔄 Pipeline CI/CD
 Posee su propio flujo en **GitHub Actions** asociado a la rama `deploy`. Se compila la imagen, se almacena en el repositorio remoto y se despliega directamente en el clúster EC2 backend de manera transparente y automatizada utilizando **AWS SSM** para la ejecución remota de comandos.
+
+## 🔄 Pipeline CI/CD
+El flujo de CI/CD posee su propio flujo en **GitHub Actions** asociado a la rama `deploy`. Se compila la imagen, se almacena en el repositorio remoto y se despliega directamente en el clúster EC2 backend de manera transparente y automatizada utilizando **AWS SSM** para la ejecución remota de comandos.
+
+## 📡 Comunicación entre aplicaciones
+- **Cómo se conectan:** El frontend se comunica con los microservicios de ventas y despachos a través de HTTP/REST. En producción se recomienda enrutar el tráfico por un proxy (NGINX o API Gateway) y usar la red interna de Docker para llamadas entre contenedores.
+- **Desde Backend Ventas → Despachos:** El microservicio de `despachos` obtiene las órdenes registradas por `ventas` ya sea realizando peticiones HTTP a los endpoints de `ventas` o consumiendo eventos desde un bus (si se habilita). Ambos enfoques son compatibles; si se usa la base de datos compartida o colas/eventos, documentarlo y configurarlo explícitamente.
+- **Variables de entorno importantes:** `VENTAS_HOST`, `DESPACHOS_HOST`, `DB_*` (host/port/name/user/password). En Docker Compose use los nombres de servicio como host (ej. `ventas:8080`).
+
+## 🔌 Endpoints de ejemplo
+- `GET /api/v1/despachos` — Listar despachos.
+- `POST /api/v1/despachos` — Crear una orden de despacho.
+- `GET /api/v1/despachos/{id}` — Consultar estado del despacho.
+
+## 🧭 Ejecutar en el Monorepo (Docker Compose)
+1. Desde la raíz del repositorio con todos los servicios (monorepo) ejecutar:
+   ```bash
+   docker compose up -d --build
+   ```
+2. Esto levantará `backend-ventas`, `backend-despachos`, `front-despacho` y la base de datos según el `docker-compose.yml` de la raíz.
+
+## 📝 Buenas prácticas de integración
+- Configure siempre los `HOST`/`PORT` de los servicios como variables de entorno para facilitar despliegues.
+- En entornos distribuidos, use TLS entre servicios y autenticación (tokens o mTLS) para asegurar las llamadas internas.
