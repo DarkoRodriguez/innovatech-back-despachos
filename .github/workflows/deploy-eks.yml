@@ -35,7 +35,9 @@ jobs:
         run: |
           cd Springboot-API-REST-DESPACHO
           docker build -t $ECR_REGISTRY/${ECR_REPO_BACKEND}:${IMAGE_TAG} .
+          docker tag $ECR_REGISTRY/${ECR_REPO_BACKEND}:${IMAGE_TAG} $ECR_REGISTRY/${ECR_REPO_BACKEND}:latest
           docker push $ECR_REGISTRY/${ECR_REPO_BACKEND}:${IMAGE_TAG}
+          docker push $ECR_REGISTRY/${ECR_REPO_BACKEND}:latest
 
       - name: Instalar kubectl
         uses: azure/setup-kubectl@v4
@@ -55,6 +57,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
+          kubectl create namespace innovatech --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
           kubectl set image deployment/backend-despachos backend-despachos=$ECR_REGISTRY/${ECR_REPO_BACKEND}:${IMAGE_TAG} -n innovatech
           kubectl rollout status deployment/backend-despachos -n innovatech
